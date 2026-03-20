@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/worry.dart';
 import '../../data/providers/worry_providers.dart';
+import '../common/planet_blast_overlay.dart';
 import 'widgets/star_field_painter.dart';
 import 'widgets/worry_planet_widget.dart';
 
@@ -131,29 +132,44 @@ class HomeScreen extends ConsumerWidget {
             GestureDetector(
               onTap: () => context.push('/archive'),
               child: Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.divider),
-                  color: AppColors.backgroundCard.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: AppColors.accentPurple.withOpacity(0.35),
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.backgroundSurface.withOpacity(0.95),
+                      AppColors.backgroundCard.withOpacity(0.88),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accentPurple.withOpacity(0.12),
+                      blurRadius: 14,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      '✦',
-                      style: TextStyle(
-                        color: AppColors.starResolved,
-                        fontSize: 12,
-                      ),
+                    Image.asset(
+                      'assets/space.png',
+                      width: 30,
+                      height: 30,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
                       '은하수 ($resolvedCount)',
                       style: const TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textPrimary,
                         fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.1,
                       ),
                     ),
                   ],
@@ -193,7 +209,10 @@ class HomeScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _WorryDetailSheet(worry: worry),
+      builder: (_) => _WorryDetailSheet(
+        worry: worry,
+        parentContext: context,
+      ),
     );
   }
 }
@@ -450,10 +469,17 @@ class _FloatingPlanetState extends State<_FloatingPlanet>
 // ─────────────────────────────────────────────────────────────
 class _WorryDetailSheet extends ConsumerWidget {
   final Worry worry;
-  const _WorryDetailSheet({required this.worry});
+  final BuildContext parentContext;
+
+  const _WorryDetailSheet({
+    required this.worry,
+    required this.parentContext,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.78;
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(28),
@@ -462,10 +488,13 @@ class _WorryDetailSheet extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.divider),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Row(
             children: [
               SizedBox(
@@ -525,9 +554,47 @@ class _WorryDetailSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
-              ref.read(worryProvider.notifier).deleteWorry(worry.id);
+              final saveFuture = ref.read(worryProvider.notifier).saveReview(
+                    id: worry.id,
+                    answer: ReviewAnswer.resolved,
+                  );
+
+              await showPlanetBlastDialog(
+                parentContext,
+                intensity: worry.intensity,
+                isResolved: true,
+              );
+
+              await saveFuture;
+            },
+            child: Container(
+              width: double.infinity,
+              height: 48,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4A90D9), Color(0xFF7B6FBF)],
+                ),
+              ),
+              child: const Center(
+                child: Text(
+                  '걱정 해결됐어요',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () async {
+              Navigator.pop(context);
+              await ref.read(worryProvider.notifier).deleteWorry(worry.id);
             },
             child: Container(
               width: double.infinity,
@@ -550,7 +617,9 @@ class _WorryDetailSheet extends ConsumerWidget {
               ),
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

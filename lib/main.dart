@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'data/repositories/worry_repository.dart';
@@ -23,6 +25,8 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  await NotificationService.instance.initialize();
+
   final repo = WorryRepository();
   await repo.init();
 
@@ -43,6 +47,16 @@ class NoproblemApp extends ConsumerWidget {
       title: '나중에 보면',
       theme: AppTheme.theme,
       routerConfig: appRouter,
+      locale: const Locale('ko', 'KR'),
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+        Locale('en', 'US'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       debugShowCheckedModeBanner: false,
     );
   }

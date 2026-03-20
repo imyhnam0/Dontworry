@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/services/notification_service.dart';
 import '../models/worry.dart';
 import '../repositories/worry_repository.dart';
 
@@ -19,11 +20,18 @@ class WorryNotifier extends StateNotifier<List<Worry>> {
 
   Future<void> addWorry(Worry worry) async {
     await _repo.save(worry);
+    await NotificationService.instance.requestPermissions();
+    await NotificationService.instance.scheduleWorryReminder(
+      worryId: worry.id,
+      content: worry.content,
+      scheduledAt: worry.reviewAt,
+    );
     load();
   }
 
   Future<void> deleteWorry(String id) async {
     await _repo.delete(id);
+    await NotificationService.instance.cancelWorryReminder(id);
     load();
   }
 
@@ -33,6 +41,7 @@ class WorryNotifier extends StateNotifier<List<Worry>> {
     String? note,
   }) async {
     await _repo.saveReview(id: id, answer: answer, note: note);
+    await NotificationService.instance.cancelWorryReminder(id);
     load();
   }
 

@@ -18,22 +18,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final _pages = const [
     _OnboardingPage(
-      emoji: '✦',
-      title: '지금은 크게 느껴져도',
-      subtitle: '나중에 보면\n다르게 보일 수 있어요',
-      body: '걱정을 털어놓고\n잠시 맡겨두세요',
+      imagePath: 'assets/icon.png',
+      title: '우리가 하는',
+      subtitle: '걱정의 90%는\n일어나지 않습니다',
+      body: '확인해봐요!',
     ),
     _OnboardingPage(
-      emoji: '◈',
+      imagePath: 'assets/icon.png',
       title: '별처럼 떠 있다가',
-      subtitle: '때가 되면\n다시 꺼내볼게요',
+      subtitle: '때가 되면\n다시 꺼내봐요',
       body: '지정한 날이 오면\n조용히 알려드릴게요',
     ),
     _OnboardingPage(
-      emoji: '✧',
+      imagePath: 'assets/icon.png',
       title: '그때의 걱정이',
       subtitle: '지금은 어떻게\n느껴지나요?',
-      body: '시간이 답해줄 거예요',
+      body: '일어나지 않았죠?',
     ),
   ];
 
@@ -151,13 +151,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _OnboardingPage extends StatelessWidget {
-  final String emoji;
+  final String imagePath;
   final String title;
   final String subtitle;
   final String body;
 
   const _OnboardingPage({
-    required this.emoji,
+    required this.imagePath,
     required this.title,
     required this.subtitle,
     required this.body,
@@ -171,12 +171,10 @@ class _OnboardingPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Spacer(flex: 2),
-          Text(
-            emoji,
-            style: const TextStyle(
-              fontSize: 48,
-              color: AppColors.accentBlue,
-            ),
+          Image.asset(
+            imagePath,
+            width: 180,
+            fit: BoxFit.contain,
           )
               .animate()
               .fadeIn(duration: 800.ms, curve: Curves.easeOut)

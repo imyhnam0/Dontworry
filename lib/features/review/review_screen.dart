@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/worry.dart';
 import '../../data/providers/worry_providers.dart';
+import '../common/planet_blast_overlay.dart';
 import '../home/widgets/star_field_painter.dart';
 import '../home/widgets/worry_planet_widget.dart';
 
@@ -18,18 +19,30 @@ class ReviewScreen extends ConsumerStatefulWidget {
 
 class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   bool _saved = false;
+  bool _isSaving = false;
   ReviewAnswer? _selectedAnswer;
 
-  Future<void> _save(ReviewAnswer answer) async {
+  Future<void> _save(Worry worry, ReviewAnswer answer) async {
+    if (_isSaving) return;
     setState(() {
       _selectedAnswer = answer;
       _saved = true;
+      _isSaving = true;
     });
-    await ref.read(worryProvider.notifier).saveReview(
+
+    final saveFuture = ref.read(worryProvider.notifier).saveReview(
           id: widget.worryId,
           answer: answer,
         );
-    await Future.delayed(const Duration(milliseconds: 1800));
+
+    await showPlanetBlastDialog(
+      context,
+      intensity: worry.intensity,
+      isResolved: answer.isResolved,
+    );
+
+    await saveFuture;
+    await Future.delayed(const Duration(milliseconds: 400));
     if (mounted) context.go('/home');
   }
 
@@ -56,15 +69,22 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            isResolved ? '✦' : '◈',
-            style: TextStyle(
-              fontSize: 40,
-              color: isResolved
-                  ? AppColors.starResolved
-                  : AppColors.starReviewable,
-            ),
-          ).animate().scale(
+          (isResolved
+                  ? const Text(
+                      '✦',
+                      style: TextStyle(
+                        fontSize: 40,
+                        color: AppColors.starResolved,
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/space.png',
+                      width: 88,
+                      height: 88,
+                      fit: BoxFit.contain,
+                    ))
+              .animate()
+              .scale(
                 begin: const Offset(0.3, 0.3),
                 curve: Curves.elasticOut,
                 duration: 800.ms,
@@ -196,7 +216,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _save(ReviewAnswer.resolved),
+                  onTap: () => _save(worry, ReviewAnswer.resolved),
                   child: Container(
                     height: 60,
                     decoration: BoxDecoration(
@@ -231,7 +251,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               const SizedBox(width: 14),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _save(ReviewAnswer.notResolved),
+                  onTap: () => _save(worry, ReviewAnswer.notResolved),
                   child: Container(
                     height: 60,
                     decoration: BoxDecoration(
