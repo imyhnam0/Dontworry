@@ -48,7 +48,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final worry = ref.read(worryProvider.notifier).getById(widget.worryId);
+    final worries = ref.watch(worryProvider);
+    Worry? worry;
+    for (final item in worries) {
+      if (item.id == widget.worryId) {
+        worry = item;
+        break;
+      }
+    }
+    worry ??= ref.read(worryProvider.notifier).getById(widget.worryId);
+
     if (worry == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/home'));
       return const SizedBox.shrink();

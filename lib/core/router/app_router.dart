@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/notification_service.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/write/write_screen.dart';
@@ -9,12 +10,20 @@ import '../../features/archive/archive_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/home',
+  refreshListenable: NotificationService.instance.pendingRoute,
   redirect: (context, state) async {
     final prefs = await SharedPreferences.getInstance();
     final onboarded = prefs.getBool('onboarded') ?? false;
     if (!onboarded && state.matchedLocation != '/onboarding') {
       return '/onboarding';
     }
+
+    final pendingRoute = NotificationService.instance.pendingRoute.value;
+    if (pendingRoute != null && state.matchedLocation != pendingRoute) {
+      NotificationService.instance.clearPendingRoute();
+      return pendingRoute;
+    }
+
     return null;
   },
   routes: [

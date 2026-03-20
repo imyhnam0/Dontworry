@@ -10,11 +10,36 @@ import '../common/planet_blast_overlay.dart';
 import 'widgets/star_field_painter.dart';
 import 'widgets/worry_planet_widget.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(worryProvider.notifier).load();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final worries = ref.watch(worryProvider);
     final reviewable = ref.watch(reviewableWorriesProvider);
     final active = ref.watch(activeWorriesProvider);

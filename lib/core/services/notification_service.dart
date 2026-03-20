@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -9,6 +10,7 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  final ValueNotifier<String?> pendingRoute = ValueNotifier<String?>(null);
 
   bool _initialized = false;
 
@@ -29,7 +31,17 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _plugin.initialize(settings);
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: _handleNotificationResponse,
+    );
+
+    final initialPayload = launchDetails?.didNotificationLaunchApp == true
+        ? launchDetails?.notificationResponse?.payload
+        : null;
+    _setPendingReviewRoute(initialPayload);
     _initialized = true;
   }
 
@@ -87,6 +99,7 @@ class NotificationService {
       _bodyFor(content),
       tz.TZDateTime.from(scheduledAt, tz.UTC),
       details,
+      payload: worryId,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
@@ -103,6 +116,20 @@ class NotificationService {
       0,
       (value, unit) => (value * 31 + unit) & 0x7fffffff,
     );
+  }
+
+  void clearPendingRoute() {
+    pendingRoute.value = null;
+  }
+
+  void _handleNotificationResponse(NotificationResponse response) {
+    _setPendingReviewRoute(response.payload);
+  }
+
+  void _setPendingReviewRoute(String? worryId) {
+    final trimmed = worryId?.trim();
+    if (trimmed == null || trimmed.isEmpty) return;
+    pendingRoute.value = '/review/$trimmed';
   }
 
   String _bodyFor(String content) {
